@@ -2,7 +2,7 @@ Extrae de la nota la pieza, la hora y la causa. Responde solo con JSON.
 Causas posibles: herramienta, vibracion, sujecion, refrigeracion, camara, ninguna.
 Si no se nombra ninguna pieza, pieza es "".
 
-Nota: 09:30 cambio de herramienta, la P0301 con marcas
+Nota: 09:30 cambio de herramienta, la P0301 con marcas, revisar P0301
 JSON: {"pieza": "P0301", "hora": "09:30", "causa": "herramienta"}
 
 Nota: todo normal en el turno hasta las 09:50
@@ -10,6 +10,12 @@ JSON: {"pieza": "", "hora": "09:50", "causa": "ninguna"}
 
 Nota: a las 10h05 se calienta el husillo por falta de refrigerante, revisar P0322
 JSON: {"pieza": "P0322", "hora": "10:05", "causa": "refrigeracion"}
+
+Nota: 14:45 P0811 con rayón, parece de la herramienta desgastada, revisar P0811
+JSON: {"pieza": "P0811", "hora": "14:45", "causa": "herramienta"}
+
+Nota: 15:30 la cámara de inspección no enciende, piezas sin foto desde la P0860, revisar P860
+JSON: {"pieza": "P0860", "hora": "15:30", "causa": "camara"}
 
 Nota: {nota}
 JSON:

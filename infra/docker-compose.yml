@@ -121,6 +121,19 @@ services:
       - "9090:9090"
     mem_limit: 256m
 
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:latest
+    ports:
+      - "5678:5678"
+    environment:
+      GENERIC_TIMEZONE: Europe/Madrid
+      TZ: Europe/Madrid
+      N8N_SECURE_COOKIE: "false"
+    volumes:
+      - ./n8n_data:/home/node/.n8n
+    mem_limit: 512m
+    restart: unless-stopped
+
   lab:
     build: .
     entrypoint: ["python", "-m", "linea.cli"]
@@ -132,6 +145,7 @@ services:
       - ./construye:/construye
     mem_limit: 2g
     profiles: ["lab"]
+<<<<<<< HEAD
   n8n-carpeta:             # una vez: crea ./data/n8n, la única carpeta donde n8n puede escribir
     build: .
     entrypoint: ["sh", "-c", "mkdir -p /data/n8n && chown 1000:1000 /data/n8n"]
@@ -160,3 +174,6 @@ services:
 
 volumes:
   n8n_data:
+=======
+
+>>>>>>> desarrollo
