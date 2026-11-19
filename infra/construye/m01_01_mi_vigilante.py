@@ -11,7 +11,7 @@ import time
 import paho.mqtt.client as mqtt
 
 # --- Decisiones tuyas (las cambiarás en los pasos finales) -------------------
-DURACION_S = 20        # cuántos segundos escucha el vigilante
+DURACION_S = 180        # cuántos segundos escucha el vigilante
 PARADA_S = 2.5         # segundos sin carcasa a partir de los que se considera una parada
 
 # --- PASO 1: conectar con el broker (ya está hecho) --------------------------
@@ -27,7 +27,7 @@ cliente.connect("mosquitto", 1883)               # el broker, por su nombre en l
 print("conectado al broker mosquitto:1883")
 
 # --- PASO 2: suscribirse y escuchar --------------------------------------------
-# (pega aquí el bloque del paso 2)
+
 cliente.subscribe("linea/est01/ciclo")          # a partir de aquí el broker te reenvía cada carcasa
 cliente.loop_start()                             # paho recibe en segundo plano
 time.sleep(DURACION_S)                           # escuchas durante DURACION_S segundos
@@ -55,7 +55,6 @@ for (_, anterior), (_, actual) in zip(recibidos, recibidos[1:]):     # cada regi
         print(f"REINICIO: después de {anterior['pieza_id']} llega {actual['pieza_id']}")
 print(f"huecos={huecos} reinicios={reinicios}")
 
-
 # --- PASO 5: distinguir una parada de una pérdida ------------------------------
 # (pega aquí el bloque del paso 5)
 paradas = 0
@@ -67,7 +66,6 @@ for (llegada_ant, anterior), (llegada, actual) in zip(recibidos, recibidos[1:]):
 print(f"paradas={paradas}")
 
 # --- PASO 6: conciliar lo fabricado con lo recibido ----------------------------
-# (pega aquí el bloque del paso 6)
 fabricadas = recibidos[-1][1]["secuencia"] - recibidos[0][1]["secuencia"] + 1
 if reinicios:
     print("conciliación: no se puede, la estación se reinició mientras escuchabas")
