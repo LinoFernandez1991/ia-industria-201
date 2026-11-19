@@ -13,7 +13,7 @@ import httpx
 from linea.estado import leer                      # el último estado que publicó la estación
 
 # --- Decisiones tuyas (las cambiarás en los pasos finales) -------------------
-PETICION = "¿Cómo está la estación EST-01 ahora?"
+PETICION = "¿Cómo está la estación EST-01 ahora?" #"Para la estación EST-01 ahora mismo." 
 
 # --- PASO 1: la caja de herramientas (ya está hecho) -------------------------
 def leer_estacion():
@@ -27,12 +27,53 @@ print("herramientas del agente:", list(HERRAMIENTAS))
 
 # --- PASO 2: decidir qué herramienta hace falta --------------------------------
 # (pega aquí el bloque del paso 2)
+PLAN = {"leer_estacion": ["cómo está", "temperatura", "estado", "vibración", "corriente"],
+        "carcasas_ultimo_minuto": ["cuántas carcasas", "producción", "fabricado"]}
 
+CAMBIOS = ["para ", "sube", "baja", "cambia", "escribe", "apaga"]
+
+def elegir_herramienta(peticion):
+    texto = peticion.lower()
+    if any(palabra in texto for palabra in CAMBIOS):
+        return None                                   # pedir un cambio: no hay herramienta para eso
+    for herramienta, claves in PLAN.items():
+        if any(clave in texto for clave in claves):
+            return herramienta
+    return None
+
+herramienta = elegir_herramienta(PETICION)
+print(f"petición: {PETICION}  ->  herramienta: {herramienta}")
 # --- PASO 3: usar la herramienta y dejar traza ---------------------------------
 # (pega aquí el bloque del paso 3)
-
+dato = HERRAMIENTAS[herramienta]() if herramienta else None
+with open("/data/mi_traza_agente.jsonl", "a") as traza:
+    traza.write(json.dumps({"hora": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+                            "peticion": PETICION, "herramienta": herramienta, "dato": dato}, ensure_ascii=False) + "\n")
+print("dato de la herramienta:", dato)
 # --- PASO 4: redactar la respuesta con el dato ---------------------------------
 # (pega aquí el bloque del paso 4)
+if dato is None:
+    respuesta = "No puedo hacer eso: no tengo ninguna herramienta que cambie la estación. Avisa al responsable de turno."
+else:
+    mensajes = [{"role": "system", "content": "Redacta una frase para el supervisor. Copia los números exactamente."},
+                {"role": "user", "content": f"Petición: {PETICION}\nDato de {herramienta}: {json.dumps(dato)}"}]
+    r = httpx.post("http://llm:8088/v1/chat/completions", json={"messages": mensajes, "max_tokens": 60}, timeout=60)
+    respuesta = r.json()["choices"][0]["message"]["content"].strip()
+print("agente:", respuesta)
 
 # --- PASO 5: comprobar que ha copiado bien el dato -----------------------------
 # (pega aquí el bloque del paso 5)
+if dato is not None:
+    numeros = [str(v) for v in dato.values() if isinstance(v, (int, float))]   # los números que dio la herramienta
+    faltan = [n for n in numeros if n not in respuesta]
+    print("comprobación:", "OK, todos los números son los de la herramienta" if not faltan else f"NO: faltan o cambian {faltan}; no enseñar")
+
+
+def carcasas_ultimo_minuto():
+    """Cuenta las carcasas guardadas en el histórico en el último minuto. Solo lectura."""
+    import sqlite3
+    with sqlite3.connect("file:/data/historial.sqlite?mode=ro", uri=True) as con:
+        n = con.execute("SELECT COUNT(*) FROM lecturas WHERE ts >= strftime('%Y-%m-%dT%H:%M:%S', 'now', '-60 seconds')").fetchone()[0]
+    return {"carcasas_ultimo_minuto": n}
+
+HERRAMIENTAS["carcasas_ultimo_minuto"] = carcasas_ultimo_minuto
